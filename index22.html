@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Japan Trip 2027 – Connor, Nate, Mikey, Kyle, Ethan & Mason</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14110d;
+    --surface: #1d1812;
+    --surface-2: #241d15;
+    --text: #efe6d4;
+    --muted: #b0a289;
+    --accent: #c1440e;
+    --accent-2: #cda45e;
+    --border: #3a3024;
+    --green: #7a9471;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Zen Kaku Gothic New', -apple-system, BlinkMacSystemFont, sans-serif;
+    line-height: 1.6;
+    color: var(--text);
+    background-color: var(--bg);
+    background-image:
+      radial-gradient(circle at 3px 3px, rgba(239,230,212,0.035) 1px, transparent 0);
+    background-size: 26px 26px;
+  }
+  h1, h2, h3, .display { font-family: 'Shippori Mincho', serif; }
+  a { color: inherit; }
+  .wrap { max-width: 1480px; margin: 0 auto; padding: 0 18px; }
+
+  header {
+    position: relative;
+    background:
+      linear-gradient(180deg, rgba(20,17,13,0.4) 0%, rgba(20,17,13,0.92) 78%, var(--bg) 100%),
+      url('https://images.unsplash.com/photo-1717916791744-2301dc103c8a?auto=format&fit=crop&w=1800&q=60') center/cover;
+    padding: 90px 20px 54px;
+    text-align: center;
+    border-bottom: 3px solid var(--accent);
+  }
+  header::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(135deg, rgba(193,68,14,0.06) 0 2px, transparent 2px 34px);
+    pointer-events: none;
+  }
+  h1 { font-size: 3.6rem; font-weight: 800; letter-spacing: 1px; color: #f4ece0; text-shadow: 0 4px 24px rgba(0,0,0,0.6); position: relative; }
+  h1 .kanji { display: block; font-size: 1.1rem; letter-spacing: 8px; color: var(--accent-2); font-weight: 500; margin-bottom: 10px; }
+  .names { font-size: 1.2rem; color: var(--muted); margin-top: 10px; font-weight: 500; position: relative; }
+  .meta { color: #e9dfc8; margin-top: 8px; font-size: 1.02rem; opacity: 0.92; position: relative; }
+  .meta strong { color: var(--accent-2); }
+
+  nav { background: rgba(29,24,18,0.94); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+  nav ul { display: flex; list-style: none; justify-content: center; flex-wrap: wrap; max-width: 1480px; margin: 0 auto; }
+  nav a { display: block; padding: 13px 16px; text-decoration: none; color: #d8cbb3; font-weight: 500; font-size: 0.85rem; letter-spacing: 0.4px; transition: all 0.2s; border-bottom: 2px solid transparent; }
+  nav a:hover { color: var(--accent-2); border-bottom-color: var(--accent); }
+
+  section { padding: 56px 18px 20px; }
+  section.band { max-width: 1480px; margin: 0 auto; }
+  .section-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 6px; max-width: 1480px; margin-left: auto; margin-right: auto; padding: 0 0px; }
+  .section-head .num { font-size: 0.85rem; color: var(--accent); letter-spacing: 2px; }
+  h2 { color: #f4ece0; font-size: 2rem; font-weight: 700; letter-spacing: 0.3px; }
+  .section-sub { color: var(--muted); font-size: 0.95rem; margin: 6px 0 22px; max-width: 1480px; margin-left: auto; margin-right: auto; }
+
+  /* Tile grid - big images, overlay captions */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; max-width: 1480px; margin: 0 auto; }
+  .tile { position: relative; aspect-ratio: 4/5; border-radius: 3px; overflow: hidden; cursor: zoom-in; border: 1px solid var(--border); }
+  .tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s ease; }
+  .tile:hover img { transform: scale(1.06); }
+  .tile-overlay { position: absolute; left: 0; right: 0; bottom: 0; padding: 16px 14px 12px; background: linear-gradient(to top, rgba(10,8,6,0.95) 5%, rgba(10,8,6,0.55) 55%, transparent 100%); }
+  .tile-tag { display: inline-block; font-size: 0.65rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent-2); margin-bottom: 4px; }
+  .tile-overlay h4 { color: #f6efe1; font-size: 1.08rem; font-weight: 700; font-family: 'Shippori Mincho', serif; line-height: 1.25; }
+  .tile-overlay p { color: #d2c5ab; font-size: 0.83rem; margin-top: 4px; line-height: 1.4; }
+  .tile.wide { aspect-ratio: 8/5; }
+
+  /* Overview cards */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; max-width: 1480px; margin: 0 auto; }
+  .card { position: relative; aspect-ratio: 5/4; border-radius: 3px; overflow: hidden; border: 1px solid var(--border); cursor: zoom-in; }
+  .card img { width: 100%; height: 100%; object-fit: cover; }
+  .card-body { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px; background: linear-gradient(to top, rgba(10,8,6,0.95), transparent); }
+  .badge { display: inline-block; color: var(--accent-2); font-size: 0.68rem; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1.5px; }
+  .card-body h3 { color: #f6efe1; font-size: 1.25rem; font-family: 'Shippori Mincho', serif; }
+  .card-body p { color: #d2c5ab; font-size: 0.88rem; margin-top: 4px; }
+
+  #map { height: 440px; border-radius: 3px; overflow: hidden; margin-top: 4px; border: 1px solid var(--border); background: #0f0d0a; max-width: 1480px; margin-left: auto; margin-right: auto; }
+
+  .cost-table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); max-width: 1480px; margin: 0 auto; }
+  .cost-table th, .cost-table td { padding: 13px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+  .cost-table th { background: #120f0b; color: var(--accent-2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.8rem; }
+  .cost-table tr:last-child td { border-bottom: none; font-weight: 700; color: var(--accent); font-size: 1.05rem; background: rgba(193,68,14,0.08); }
+  .cost-table td:nth-child(2) { color: #f4ece0; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tip-box { background: rgba(205,164,94,0.08); border-left: 3px solid var(--accent-2); padding: 13px 18px; margin: 16px auto 0; font-size: 0.92rem; color: var(--text); max-width: 1480px; }
+  .tip-box strong { color: var(--accent-2); }
+
+  .hotel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; max-width: 1480px; margin: 0 auto; }
+  .hotel-card { position: relative; aspect-ratio: 4/3; border-radius: 3px; overflow: hidden; border: 1px solid var(--border); cursor: zoom-in; }
+  .hotel-card img { width: 100%; height: 100%; object-fit: cover; }
+  .hotel-info { position: absolute; left: 0; right: 0; bottom: 0; padding: 16px; background: linear-gradient(to top, rgba(10,8,6,0.95), transparent); }
+  .hotel-info .city-tag { font-size: 0.65rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent-2); }
+  .hotel-info h3 { color: #f6efe1; font-family: 'Shippori Mincho', serif; font-size: 1.1rem; margin-top: 2px; }
+  .hotel-info p { font-size: 0.85rem; color: #d2c5ab; margin-top: 3px; }
+  .price { color: var(--accent-2); font-weight: 700; font-size: 1rem; margin-top: 6px; }
+
+  .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; max-width: 1480px; margin: 0 auto; }
+  .pack-card { background: var(--surface); border: 1px solid var(--border); padding: 16px; }
+  .pack-card h3 { color: #f4ece0; margin-bottom: 10px; font-size: 1rem; font-family: 'Shippori Mincho', serif; }
+  .pack-card ul { list-style: none; padding: 0; }
+  .pack-card li { padding: 5px 0; color: #cfc2a9; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .pack-card li:last-child { border-bottom: none; }
+
+  .essence-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; max-width: 1480px; margin: 0 auto; }
+  .essence-card { background: var(--surface); border: 1px solid var(--border); padding: 18px; }
+  .essence-card h3 { color: #f4ece0; margin-bottom: 8px; font-size: 1rem; font-family: 'Shippori Mincho', serif; }
+  .essence-card p, .essence-card li { color: #cfc2a9; font-size: 0.9rem; }
+  .essence-card ul { padding-left: 18px; margin-top: 6px; }
+
+  .food-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; max-width: 1480px; margin: 0 auto; }
+  .food-card { position: relative; aspect-ratio: 1/1; border-radius: 3px; overflow: hidden; border: 1px solid var(--border); cursor: zoom-in; }
+  .food-card img { width: 100%; height: 100%; object-fit: cover; }
+  .food-info { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px 12px 10px; background: linear-gradient(to top, rgba(10,8,6,0.95), transparent); }
+  .food-info h4 { color: #f6efe1; font-size: 1rem; font-family: 'Shippori Mincho', serif; }
+  .food-info p { color: #d2c5ab; font-size: 0.78rem; margin-top: 2px; }
+
+  footer { text-align: center; padding: 46px 20px 40px; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--border); margin-top: 50px; background: var(--surface); }
+  footer .kanji-foot { color: var(--accent); letter-spacing: 4px; margin-bottom: 6px; font-family: 'Shippori Mincho', serif; }
+
+  #lightbox { display: none; position: fixed; inset: 0; background: rgba(8,6,4,0.94); z-index: 1000; align-items: center; justify-content: center; padding: 30px; cursor: zoom-out; }
+  #lightbox.open { display: flex; }
+  #lightbox img { max-width: 100%; max-height: 100%; border-radius: 4px; box-shadow: 0 20px 70px rgba(0,0,0,0.7); }
+  #lightbox-close { position: fixed; top: 18px; right: 24px; font-size: 2.2rem; color: #f4ece0; cursor: pointer; z-index: 1001; line-height: 1; }
+
+  @media (max-width: 768px) {
+    h1 { font-size: 2.2rem; }
+    nav ul { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; }
+    #map { height: 300px; }
+    section { padding: 36px 14px 10px; }
+    .tiles, .grid, .hotel-grid, .food-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="kanji">日本 2027</span>Japan Trip</h1>
+  <p class="names">Connor, Nate, Mikey, Kyle, Ethan & Mason</p>
+  <p class="meta">Japan Trip • <strong>Tokyo</strong> · <strong>Osaka</strong> · <strong>Kyoto</strong> · <strong>Nara</strong> · <strong>Mt. Fuji</strong> — mid-June 2027</p>
+  <p class="meta">Nonstop SFO → Tokyo (NRT) • Osaka (KIX) → SFO</p>
+</header>
+
+<nav>
+  <ul>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#map">Map</a></li>
+    <li><a href="#cost">Budget</a></li>
+    <li><a href="#tokyo">Tokyo</a></li>
+    <li><a href="#osaka">Osaka</a></li>
+    <li><a href="#kyoto">Kyoto</a></li>
+    <li><a href="#daytrips">Day Trips & Hikes</a></li>
+    <li><a href="#hotels">Hotels</a></li>
+    <li><a href="#food">Food Guide</a></li>
+    <li><a href="#pack">Pack List</a></li>
+    <li><a href="#essentials">Essentials</a></li>
+  </ul>
+</nav>
+
+<section id="overview" class="band">
+  <div class="section-head"><h2>The Basics</h2></div>
+  <p class="section-sub">No fixed schedule — everything below is a list of stuff to pick from in each city, not a day-by-day plan. Go where the mood takes you.</p>
+  <div class="grid">
+    <div class="card">
+      <img src="https://images.unsplash.com/photo-1729864909740-08aaf6260705?auto=format&fit=crop&w=800&q=80" alt="Japanese temple">
+      <div class="card-body">
+        <span class="badge">When</span>
+        <h3>Mid-June 2027</h3>
+        <p>14 days, no rush — it's rainy season, so we've got indoor backups</p>
+      </div>
+    </div>
+    <div class="card">
+      <img src="https://images.unsplash.com/photo-1717916791744-2301dc103c8a?auto=format&fit=crop&w=800&q=80" alt="Shibuya crossing Tokyo">
+      <div class="card-body">
+        <span class="badge">Flights</span>
+        <h3>Fly Into Tokyo, Out of Osaka</h3>
+        <p>SFO → Narita, Kansai → SFO, nonstop both ways</p>
+      </div>
+    </div>
+    <div class="card">
+      <img src="https://images.unsplash.com/photo-1680699641218-bb36b3eb8935?auto=format&fit=crop&w=800&q=80" alt="Hotel room">
+      <div class="card-body">
+        <span class="badge">Squad</span>
+        <h3>The 6 of Us</h3>
+        <p>2 hotel rooms per city, 2 beds each, ~3 to a room</p>
+      </div>
+    </div>
+    <div class="card">
+      <img src="https://images.unsplash.com/photo-1780498178879-4064b19e6517?auto=format&fit=crop&w=800&q=80" alt="Mount Fuji">
+      <div class="card-body">
+        <span class="badge">Vibe</span>
+        <h3>Cities, Temples & One Big Hike</h3>
+        <p>Anime & tech shops • Old Kyoto • Osaka nights • Fuji day hike</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="map" class="band">
+  <div class="section-head"><h2>Where We're Going</h2></div>
+  <p class="section-sub">Tokyo and the Mt. Fuji area, then Kyoto and Nara, then Osaka out to Kansai Airport.</p>
+  <div id="map"></div>
+</section>
+
+<section id="cost" class="band">
+  <div class="section-head"><h2>What It'll Probably Cost (Per Person)</h2></div>
+  <p class="section-sub">Rough 2027 numbers split 6 ways, now covering the extra Kyoto/Nara/Fuji legs too.</p>
+  <table class="cost-table">
+    <tr><th>Category</th><th>Per Person</th><th>Details</th></tr>
+    <tr><td>Flights</td><td>$1,200 – $1,800</td><td>Nonstop SFO–NRT & KIX–SFO (ANA/JAL)</td></tr>
+    <tr><td>Hotels</td><td>$650 – $950</td><td>Tokyo, Kyoto & Osaka rooms combined, ÷ 6 people</td></tr>
+    <tr><td>Food</td><td>$600 – $1,050</td><td>$40–$70/day. Ramen, conveyor sushi, izakaya, street food</td></tr>
+    <tr><td>Transport</td><td>$300 – $480</td><td>Bullet train legs (Tokyo↔Kyoto↔Osaka) + local trains + Fuji day trip</td></tr>
+    <tr><td>Activities</td><td>$70 – $180</td><td>Most temples/parks are free; TeamLab, Skytree, Fuji 5th Station shuttle run $20-50 each</td></tr>
+    <tr><td>Shopping</td><td>$100 – $400</td><td>Depends how much anime/tech stuff we buy</td></tr>
+    <tr><td>Total</td><td>$2,920 – $4,860</td><td>~$3,700 average, add 10% buffer to be safe</td></tr>
+  </table>
+  <div class="tip-box">
+    <strong>Heads up:</strong> June is rainy season (梅雨) in Japan. Expect afternoon showers. Pack a small umbrella and waterproof shoes. It also means Fuji's peak trails are usually still closed to climbers in June — this is a day hike around the base/5th Station area, not a summit attempt.
+  </div>
+</section>
+
+<section id="tokyo" class="band">
+  <div class="section-head"><h2>Tokyo</h2></div>
+  <p class="section-sub">Pick and choose — shrines, neon streets, anime shops, markets, and a few good viewpoints.</p>
+  <div class="tiles">
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1717916791744-2301dc103c8a?auto=format&fit=crop&w=700&q=80" alt="Shibuya Crossing">
+      <div class="tile-overlay"><span class="tile-tag">Shibuya</span><h4>Shibuya Crossing</h4><p>The world's busiest intersection — watch it from Mag's Park or a window seat</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1717916791744-2301dc103c8a?auto=format&fit=crop&w=700&q=80" alt="Harajuku Takeshita Street">
+      <div class="tile-overlay"><span class="tile-tag">Harajuku</span><h4>Takeshita Street</h4><p>Crepes and the weirdest, best fashion in Tokyo</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1729864909740-08aaf6260705?auto=format&fit=crop&w=700&q=80" alt="Meiji Jingu Shrine">
+      <div class="tile-overlay"><span class="tile-tag">Shibuya</span><h4>Meiji Jingu Shrine</h4><p>A calm forest walk right in the middle of the city</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1717916791744-2301dc103c8a?auto=format&fit=crop&w=700&q=80" alt="Omotesando shopping street">
+      <div class="tile-overlay"><span class="tile-tag">Shopping</span><h4>Omotesando</h4><p>Tree-lined avenue, all the big brand flagship stores</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1764069138714-bcc6783b8e48?auto=format&fit=crop&w=700&q=80" alt="Akihabara electronics district">
+      <div class="tile-overlay"><span class="tile-tag">Akihabara</span><h4>Anime & Electronics</h4><p>Animate, Yodobashi, Radio Kaikan — the whole district is a rabbit hole</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1586753513812-462ed2a82584?auto=format&fit=crop&w=700&q=80" alt="Arcade">
+      <div class="tile-overlay"><span class="tile-tag">Akihabara</span><h4>Multi-Floor Arcades</h4><p>Sega, Taito, Club Sega — good for a rainy afternoon</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1719707509264-4b94100debfe?auto=format&fit=crop&w=700&q=80" alt="Ueno Park">
+      <div class="tile-overlay"><span class="tile-tag">Ueno</span><h4>Ueno Park</h4><p>Temples, museums, and a zoo, all in one park</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1729864909740-08aaf6260705?auto=format&fit=crop&w=700&q=80" alt="Senso-ji Temple Asakusa">
+      <div class="tile-overlay"><span class="tile-tag">Asakusa</span><h4>Senso-ji Temple</h4><p>Tokyo's oldest temple — walk in through Nakamise shopping street</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1553292770-c3d14b814242?auto=format&fit=crop&w=700&q=80" alt="Sumida River">
+      <div class="tile-overlay"><span class="tile-tag">Asakusa</span><h4>Sumida River Walk</h4><p>An easy waterfront stroll, or a short boat ride</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1712542864632-2e8a275efdae?auto=format&fit=crop&w=700&q=80" alt="Tokyo Skytree">
+      <div class="tile-overlay"><span class="tile-tag">Sumida</span><h4>Tokyo Skytree</h4><p>Big views, plus a mall right underneath</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1586753513812-462ed2a82584?auto=format&fit=crop&w=700&q=80" alt="TeamLab digital art">
+      <div class="tile-overlay"><span class="tile-tag">Odaiba</span><h4>TeamLab Planets / Borderless</h4><p>Book tickets online way ahead — they sell out fast</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1764069138714-bcc6783b8e48?auto=format&fit=crop&w=700&q=80" alt="Odaiba waterfront">
+      <div class="tile-overlay"><span class="tile-tag">Odaiba</span><h4>Odaiba Waterfront</h4><p>The giant Gundam statue and a nice night skyline</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1717916791744-2301dc103c8a?auto=format&fit=crop&w=700&q=80" alt="Ginza shopping street">
+      <div class="tile-overlay"><span class="tile-tag">Ginza</span><h4>Ginza</h4><p>Uniqlo flagship, stationery shops, good window shopping</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1719707509264-4b94100debfe?auto=format&fit=crop&w=700&q=80" alt="Hamarikyu Gardens">
+      <div class="tile-overlay"><span class="tile-tag">Ginza</span><h4>Hamarikyu Gardens</h4><p>A quiet, traditional garden with a teahouse in the middle</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?auto=format&fit=crop&w=700&q=80" alt="Tsukiji fish market">
+      <div class="tile-overlay"><span class="tile-tag">Tsukiji</span><h4>Tsukiji Outer Market</h4><p>Fresh sushi breakfast or lunch, straight from the stalls</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1764069138714-bcc6783b8e48?auto=format&fit=crop&w=700&q=80" alt="Shinjuku Kabukicho neon">
+      <div class="tile-overlay"><span class="tile-tag">Shinjuku</span><h4>Kabukicho & Golden Gai</h4><p>Neon everywhere, the Godzilla head, tiny bars for one drink</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1763604048392-18f8383a6542?auto=format&fit=crop&w=700&q=80" alt="Omoide Yokocho alley">
+      <div class="tile-overlay"><span class="tile-tag">Shinjuku</span><h4>Omoide Yokocho</h4><p>"Memory Lane" — tiny yakitori stalls, cheap beer</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1712542864632-2e8a275efdae?auto=format&fit=crop&w=700&q=80" alt="Shinjuku Metropolitan Government view">
+      <div class="tile-overlay"><span class="tile-tag">Shinjuku</span><h4>Metropolitan Gov Building</h4><p>Free observation deck, good sunset views</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1764069138714-bcc6783b8e48?auto=format&fit=crop&w=700&q=80" alt="Ikebukuro anime shops">
+      <div class="tile-overlay"><span class="tile-tag">Ikebukuro</span><h4>Ikebukuro & Sunshine City</h4><p>More anime stores if Akihabara wasn't enough</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1586753513812-462ed2a82584?auto=format&fit=crop&w=700&q=80" alt="Nakano Broadway">
+      <div class="tile-overlay"><span class="tile-tag">Nakano</span><h4>Nakano Broadway</h4><p>Vintage manga and collectibles, way less crowded than Akihabara</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1719707509264-4b94100debfe?auto=format&fit=crop&w=700&q=80" alt="Studio Ghibli Museum area">
+      <div class="tile-overlay"><span class="tile-tag">Mitaka</span><h4>Studio Ghibli Museum</h4><p>Needs tickets bought way ahead — plan this one early</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="osaka" class="band">
+  <div class="section-head"><h2>Osaka</h2></div>
+  <p class="section-sub">Louder, cheaper food, and a totally different energy than Tokyo.</p>
+  <div class="tiles">
+    <div class="tile wide">
+      <img src="https://images.unsplash.com/photo-1764069138714-bcc6783b8e48?auto=format&fit=crop&w=900&q=80" alt="Dotonbori at night">
+      <div class="tile-overlay"><span class="tile-tag">Dotonbori</span><h4>Dotonbori</h4><p>Neon signs, takoyaki, okonomiyaki — Osaka's main event, especially at night</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1717916791744-2301dc103c8a?auto=format&fit=crop&w=700&q=80" alt="Shinsaibashi shopping street">
+      <div class="tile-overlay"><span class="tile-tag">Shinsaibashi</span><h4>Shinsaibashi</h4><p>Covered shopping street, right next to Dotonbori</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1565559203353-49efc30af68d?auto=format&fit=crop&w=700&q=80" alt="Osaka Castle">
+      <div class="tile-overlay"><span class="tile-tag">Osaka Castle</span><h4>Osaka Castle</h4><p>Museum inside, and the park around it is worth the walk alone</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1763604048392-18f8383a6542?auto=format&fit=crop&w=700&q=80" alt="Shinsekai kushikatsu skewers">
+      <div class="tile-overlay"><span class="tile-tag">Shinsekai</span><h4>Shinsekai</h4><p>An old-school neighborhood, the best spot for kushikatsu</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?auto=format&fit=crop&w=700&q=80" alt="Kuromon Ichiba Market seafood">
+      <div class="tile-overlay"><span class="tile-tag">Nipponbashi</span><h4>Kuromon Ichiba Market</h4><p>Fresh sushi, tamagoyaki, fruit — great for grazing</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1698378671742-10f1fc868292?auto=format&fit=crop&w=700&q=80" alt="Umeda Sky Building escalator">
+      <div class="tile-overlay"><span class="tile-tag">Umeda</span><h4>Umeda Sky Building</h4><p>The floating garden observatory has some of the best views in the city</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1764069138714-bcc6783b8e48?auto=format&fit=crop&w=700&q=80" alt="Den Den Town electronics">
+      <div class="tile-overlay"><span class="tile-tag">Nipponbashi</span><h4>Den Den Town</h4><p>Osaka's version of Akihabara — anime and tech</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1586753513812-462ed2a82584?auto=format&fit=crop&w=700&q=80" alt="Namba Parks">
+      <div class="tile-overlay"><span class="tile-tag">Namba</span><h4>Namba Parks</h4><p>Modern shopping complex, easy to combine with Den Den Town</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1764069138714-bcc6783b8e48?auto=format&fit=crop&w=700&q=80" alt="Hozenji Yokocho lantern alley">
+      <div class="tile-overlay"><span class="tile-tag">Namba</span><h4>Hozenji Yokocho</h4><p>A quiet, lantern-lit stone alley — good for a night walk</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1751094364516-02b351f9c277?auto=format&fit=crop&w=700&q=80" alt="Don Quijote Namba">
+      <div class="tile-overlay"><span class="tile-tag">Namba</span><h4>Don Quijote Namba</h4><p>Endless floors of stuff, cheap souvenirs and snacks</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="kyoto" class="band">
+  <div class="section-head"><h2>Kyoto</h2></div>
+  <p class="section-sub">Now a full stop on the trip, not just a day trip — old temples, quiet streets, and a totally different pace.</p>
+  <div class="tiles">
+    <div class="tile wide">
+      <img src="https://images.unsplash.com/photo-1758470475836-f782eb7b3d35?auto=format&fit=crop&w=900&q=80" alt="Fushimi Inari torii gates">
+      <div class="tile-overlay"><span class="tile-tag">Fushimi</span><h4>Fushimi Inari</h4><p>Hike up through thousands of red torii gates (~1–2 hrs round trip)</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1729864909740-08aaf6260705?auto=format&fit=crop&w=700&q=80" alt="Kiyomizu-dera temple">
+      <div class="tile-overlay"><span class="tile-tag">Higashiyama</span><h4>Kiyomizu-dera</h4><p>A wooden temple with a great view over the valley</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1758470475836-f782eb7b3d35?auto=format&fit=crop&w=700&q=80" alt="Sannenzaka Ninenzaka streets">
+      <div class="tile-overlay"><span class="tile-tag">Higashiyama</span><h4>Sannenzaka & Ninenzaka</h4><p>Old stone streets, tea houses, traditional shops</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1624253321171-1be53e12f5f4?auto=format&fit=crop&w=700&q=80" alt="Gion district Kyoto">
+      <div class="tile-overlay"><span class="tile-tag">Gion</span><h4>Gion District</h4><p>Kyoto's geisha district — wooden machiya houses, lantern-lit at night</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1717060773524-e4a73c4b014a?auto=format&fit=crop&w=700&q=80" alt="Arashiyama bamboo grove">
+      <div class="tile-overlay"><span class="tile-tag">Arashiyama</span><h4>Arashiyama Bamboo Grove</h4><p>Towering bamboo path — go early to beat the crowds</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1758470476051-d77f13f4dc3f?auto=format&fit=crop&w=700&q=80" alt="Kinkaku-ji Golden Pavilion">
+      <div class="tile-overlay"><span class="tile-tag">Kita</span><h4>Kinkaku-ji</h4><p>The Golden Pavilion, reflected in its pond — genuinely stunning in person</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?auto=format&fit=crop&w=700&q=80" alt="Nishiki Market food stalls">
+      <div class="tile-overlay"><span class="tile-tag">Downtown</span><h4>Nishiki Market</h4><p>"Kyoto's Kitchen" — a covered street of food stalls, good for lunch</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1768165335825-c2552c6b2299?auto=format&fit=crop&w=700&q=80" alt="Matcha tea Higashiyama">
+      <div class="tile-overlay"><span class="tile-tag">Higashiyama</span><h4>Matcha & Sweets</h4><p>Tea and dessert sets all over the Higashiyama district</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="daytrips" class="band">
+  <div class="section-head"><h2>Day Trips & Hikes</h2></div>
+  <p class="section-sub">The stuff that needs a train ride out of the main cities — including the Fuji hike.</p>
+  <div class="tiles">
+    <div class="tile wide">
+      <img src="https://images.unsplash.com/photo-1780498178879-4064b19e6517?auto=format&fit=crop&w=900&q=80" alt="Mount Fuji">
+      <div class="tile-overlay"><span class="tile-tag">From Tokyo · Full Day</span><h4>Mt. Fuji / Hakone</h4><p>June is before the official climbing season opens, so this is a day of hiking trails and viewpoints around the 5th Station and Hakone area rather than a summit push. Bus out from Shinjuku (~2 hrs), lake views, maybe an onsen after.</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1553292770-c3d14b814242?auto=format&fit=crop&w=700&q=80" alt="Kamakura Great Buddha temple">
+      <div class="tile-overlay"><span class="tile-tag">From Tokyo · Half Day</span><h4>Kamakura</h4><p>The Great Buddha, Hasedera Temple, and a short, easy hike between them (~1 hr from Tokyo)</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1719707509264-4b94100debfe?auto=format&fit=crop&w=700&q=80" alt="Mount Takao hiking trail">
+      <div class="tile-overlay"><span class="tile-tag">From Tokyo · Half Day</span><h4>Mt. Takao</h4><p>A moderate hike about an hour from Shinjuku, with a temple at the top and Fuji views on a clear day</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1714625187454-c17b207686a7?auto=format&fit=crop&w=700&q=80" alt="Nara deer park">
+      <div class="tile-overlay"><span class="tile-tag">From Kyoto · Half Day</span><h4>Nara</h4><p>Hundreds of friendly deer roaming the park, plus Todai-ji's giant bronze Buddha (~45 min from Kyoto)</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1565559203353-49efc30af68d?auto=format&fit=crop&w=700&q=80" alt="Himeji Castle">
+      <div class="tile-overlay"><span class="tile-tag">From Osaka/Kyoto</span><h4>Himeji Castle</h4><p>Japan's most famous castle, nicknamed the "White Heron" (~45 min from Osaka)</p></div>
+    </div>
+    <div class="tile">
+      <img src="https://images.unsplash.com/photo-1618153231956-df23dcb21c07?auto=format&fit=crop&w=700&q=80" alt="Kobe city">
+      <div class="tile-overlay"><span class="tile-tag">From Osaka</span><h4>Kobe</h4><p>Harborland, the Kitano district, and Kobe beef for lunch (~30 min from Osaka)</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="hotels" class="band">
+  <div class="section-head"><h2>Where We're Staying</h2></div>
+  <p class="section-sub">Mid-range spots, clean, easy for non-Japanese speakers, close to train stations. Book these 3–6 months out for June.</p>
+  <div class="hotel-grid">
+    <div class="hotel-card">
+      <img src="https://images.unsplash.com/photo-1680699641218-bb36b3eb8935?auto=format&fit=crop&w=700&q=80" alt="Hotel room interior">
+      <div class="hotel-info">
+        <span class="city-tag">Tokyo</span>
+        <h3>APA Hotel Shinjuku</h3>
+        <p>5 min walk from Shinjuku Station — small rooms, but spotless and central.</p>
+        <p class="price">$100–$140 / room / night</p>
+      </div>
+    </div>
+    <div class="hotel-card">
+      <img src="https://images.unsplash.com/photo-1586753513812-462ed2a82584?auto=format&fit=crop&w=700&q=80" alt="Hotel corridor Tokyo">
+      <div class="hotel-info">
+        <span class="city-tag">Tokyo</span>
+        <h3>Dormy Inn Shibuya</h3>
+        <p>3 min from Shibuya Station — free ramen at night, public bath, laundry.</p>
+        <p class="price">$130–$170 / room / night</p>
+      </div>
+    </div>
+    <div class="hotel-card">
+      <img src="https://images.unsplash.com/photo-1758470476051-d77f13f4dc3f?auto=format&fit=crop&w=700&q=80" alt="Kyoto hotel area near temple">
+      <div class="hotel-info">
+        <span class="city-tag">Kyoto</span>
+        <h3>Kyoto Tower Hotel Annex</h3>
+        <p>Right by Kyoto Station — easy bags-down after the bullet train, easy access to buses.</p>
+        <p class="price">$110–$150 / room / night</p>
+      </div>
+    </div>
+    <div class="hotel-card">
+      <img src="https://images.unsplash.com/photo-1624253321171-1be53e12f5f4?auto=format&fit=crop&w=700&q=80" alt="Kyoto Shijo Kawaramachi area">
+      <div class="hotel-info">
+        <span class="city-tag">Kyoto</span>
+        <h3>Dormy Inn Kyoto Shijo</h3>
+        <p>Walking distance to Gion and Nishiki Market — has a rooftop hot spring bath.</p>
+        <p class="price">$125–$165 / room / night</p>
+      </div>
+    </div>
+    <div class="hotel-card">
+      <img src="https://images.unsplash.com/photo-1565559203353-49efc30af68d?auto=format&fit=crop&w=700&q=80" alt="Osaka hotel area">
+      <div class="hotel-info">
+        <span class="city-tag">Osaka</span>
+        <h3>Hotel Keihan Yodoyabashi</h3>
+        <p>Umeda area, close to the station — modern, easy bullet train access.</p>
+        <p class="price">$120–$160 / room / night</p>
+      </div>
+    </div>
+    <div class="hotel-card">
+      <img src="https://images.unsplash.com/photo-1586753513812-462ed2a82584?auto=format&fit=crop&w=700&q=80" alt="Osaka hotel room">
+      <div class="hotel-info">
+        <span class="city-tag">Osaka</span>
+        <h3>Dormy Inn Namba</h3>
+        <p>Right in Dotonbori — hot spring bath, front desk staffed 24/7.</p>
+        <p class="price">$110–$150 / room / night</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="food" class="band">
+  <div class="section-head"><h2>Food We Need to Try</h2></div>
+  <p class="section-sub">All of this is casual, cheap, and no reservation needed.</p>
+  <div class="food-grid">
+    <div class="food-card">
+      <img src="https://images.unsplash.com/photo-1709201759685-459d11d53d93?auto=format&fit=crop&w=500&q=80" alt="Ramen bowl">
+      <div class="food-info"><h4>Ramen</h4><p>Ichiran, Ippudo, or any local shop</p></div>
+    </div>
+    <div class="food-card">
+      <img src="https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?auto=format&fit=crop&w=500&q=80" alt="Sushi rolls">
+      <div class="food-info"><h4>Conveyor Belt Sushi</h4><p>Kura Sushi, Sushiro</p></div>
+    </div>
+    <div class="food-card">
+      <img src="https://images.unsplash.com/photo-1751094364516-02b351f9c277?auto=format&fit=crop&w=500&q=80" alt="Takoyaki octopus balls">
+      <div class="food-info"><h4>Takoyaki</h4><p>Fried octopus balls — Dotonbori</p></div>
+    </div>
+    <div class="food-card">
+      <img src="https://images.unsplash.com/photo-1763604048392-18f8383a6542?auto=format&fit=crop&w=500&q=80" alt="Yakitori skewers grilling">
+      <div class="food-info"><h4>Yakitori</h4><p>Grilled skewers — Omoide Yokocho</p></div>
+    </div>
+    <div class="food-card">
+      <img src="https://images.unsplash.com/photo-1764520406362-b1673b2213bf?auto=format&fit=crop&w=500&q=80" alt="Okonomiyaki cooking">
+      <div class="food-info"><h4>Okonomiyaki</h4><p>A savory pancake — big in Osaka</p></div>
+    </div>
+    <div class="food-card">
+      <img src="https://images.unsplash.com/photo-1761064864527-1306bf9b5b45?auto=format&fit=crop&w=500&q=80" alt="Taiyaki fish-shaped pastry">
+      <div class="food-info"><h4>Taiyaki & Dango</h4><p>Fish-shaped cake and sweet dumplings on a stick</p></div>
+    </div>
+    <div class="food-card">
+      <img src="https://images.unsplash.com/photo-1768165335825-c2552c6b2299?auto=format&fit=crop&w=500&q=80" alt="Matcha dessert">
+      <div class="food-info"><h4>Matcha Parfait</h4><p>Green tea dessert, worth the hype</p></div>
+    </div>
+    <div class="food-card">
+      <img src="https://images.unsplash.com/photo-1763604048392-18f8383a6542?auto=format&fit=crop&w=500&q=80" alt="Fried skewers kushikatsu">
+      <div class="food-info"><h4>Kushikatsu</h4><p>Fried skewers — Shinsekai, Osaka</p></div>
+    </div>
+    <div class="food-card">
+      <img src="https://images.unsplash.com/photo-1709201759685-459d11d53d93?auto=format&fit=crop&w=500&q=80" alt="Gyudon beef rice bowl">
+      <div class="food-info"><h4>Gyudon</h4><p>Beef rice bowl — Sukiya, Yoshinoya</p></div>
+    </div>
+    <div class="food-card">
+      <img src="https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?auto=format&fit=crop&w=500&q=80" alt="Tamagoyaki rolled omelet">
+      <div class="food-info"><h4>Tamagoyaki</h4><p>Sweet rolled omelet, usually at sushi spots</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="pack" class="band">
+  <div class="section-head"><h2>Pack List</h2></div>
+  <p class="section-sub">Pretty standard June packing. Travel light — coin lockers at stations run about $5.</p>
+  <div class="grid-2">
+    <div class="pack-card">
+      <h3>📄 Documents & Money</h3>
+      <ul>
+        <li>Passports (valid through March 2028)</li>
+        <li>Printouts of hotel & flight confirmations</li>
+        <li>Travel insurance card</li>
+        <li>Yen cash ($500–800/person)</li>
+        <li>A credit card with no foreign transaction fee</li>
+      </ul>
+    </div>
+    <div class="pack-card">
+      <h3>📱 Electronics</h3>
+      <ul>
+        <li>Phone + charger</li>
+        <li>Portable battery (max 20,000 mAh for carry-on)</li>
+        <li>USB-C or Lightning cables</li>
+        <li>Earphones / earbuds</li>
+      </ul>
+    </div>
+    <div class="pack-card">
+      <h3>👕 Clothing</h3>
+      <ul>
+        <li>Compact umbrella</li>
+        <li>Light rain jacket / poncho</li>
+        <li>5–7 quick-dry t-shirts</li>
+        <li>2 pants/shorts</li>
+        <li>1 nicer outfit for an izakaya dinner</li>
+        <li>Comfortable, broken-in sneakers (you'll want real tread for Fuji/Takao)</li>
+        <li>Sandals / slides</li>
+        <li>Socks & underwear (7+ pairs)</li>
+      </ul>
+    </div>
+    <div class="pack-card">
+      <h3>🧴 Toiletries & Health</h3>
+      <ul>
+        <li>Travel-size everything</li>
+        <li>Hand sanitizer</li>
+        <li>Band-aids / blister pads</li>
+        <li>Basic meds (pain, allergies, stomach)</li>
+        <li>Sunscreen</li>
+      </ul>
+    </div>
+    <div class="pack-card">
+      <h3>🎒 Misc Gear</h3>
+      <ul>
+        <li>Foldable tote bag (for souvenirs)</li>
+        <li>Reusable water bottle</li>
+        <li>Sunglasses</li>
+        <li>Small daypack — you'll want this for the hikes especially</li>
+        <li>Travel pillow / eye mask for the flight</li>
+      </ul>
+    </div>
+    <div class="pack-card">
+      <h3>🇯🇵 Japan Specifics</h3>
+      <ul>
+        <li>Type-A plug adapter if you need one (most US plugs just fit)</li>
+        <li>Shoes that slip on/off easily — you'll take them off a lot at temples and some restaurants</li>
+        <li>Have your travel apps and QR codes set up before you leave</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="essentials" class="band">
+  <div class="section-head"><h2>Good to Know</h2></div>
+  <div class="essence-grid">
+    <div class="essence-card">
+      <h3>🌤️ Weather & Clothing</h3>
+      <p>June in Tokyo/Kyoto/Osaka runs 70–85°F, humid, with afternoon rain most days. Quick-dry clothes, an umbrella, and waterproof shoes will save you. Fuji's base area runs noticeably cooler, so bring a layer for that day.</p>
+    </div>
+    <div class="essence-card">
+      <h3>🚄 Getting Around</h3>
+      <ul>
+        <li>Buy a Suica or Pasmo card at the airport — tap it everywhere.</li>
+        <li>For the bullet train legs, reserve your seat and buy the ticket at the station.</li>
+        <li>With Tokyo, Kyoto, Osaka, Nara, and Fuji all in the mix now, it's worth pricing out a JR Pass against buying tickets individually — it might actually pay off this time.</li>
+        <li>Use Google Maps or a train app for exact times.</li>
+      </ul>
+    </div>
+    <div class="essence-card">
+      <h3>📶 Staying Connected</h3>
+      <ul>
+        <li><strong>Pocket WiFi:</strong> about $8/day, and we can all share one.</li>
+        <li><strong>eSIM:</strong> Ubigi or Airalo — no need to swap a physical SIM.</li>
+        <li>Coverage in the cities is great; it thins out a bit up around Fuji.</li>
+      </ul>
+    </div>
+    <div class="essence-card">
+      <h3>💬 Phrases Worth Knowing</h3>
+      <ul>
+        <li><strong>Sumimasen</strong> — excuse me / sorry</li>
+        <li><strong>Arigato gozaimasu</strong> — thank you</li>
+        <li><strong>Eigo ga hanasemasu ka?</strong> — do you speak English?</li>
+        <li><strong>Toire wa doko desu ka?</strong> — where's the bathroom?</li>
+        <li><strong>Kore o kudasai</strong> — I'll have this, please</li>
+      </ul>
+    </div>
+    <div class="essence-card">
+      <h3>📲 Apps to Download</h3>
+      <ul>
+        <li><strong>Google Maps</strong> — for trains, walking, restaurant hours.</li>
+        <li><strong>Google Translate</strong> — the camera mode is great for menus.</li>
+        <li><strong>A train time app</strong> — for exact departure times.</li>
+        <li><strong>Tabelog</strong> — local restaurant reviews.</li>
+      </ul>
+    </div>
+    <div class="essence-card">
+      <h3>💴 Money Stuff</h3>
+      <ul>
+        <li>Cash is king at markets and small stalls.</li>
+        <li>7-Eleven ATMs will take foreign cards.</li>
+        <li>Use Splitwise or Venmo to settle up on hotel/food.</li>
+        <li>A lot of small places are still cash-only.</li>
+      </ul>
+    </div>
+    <div class="essence-card">
+      <h3>👥 If We Split Up</h3>
+      <ul>
+        <li>Pick a landmark to meet at if the group splits.</li>
+        <li>Leave a note on the hotel door if you're last one out.</li>
+        <li>A station clock or a big statue works as a backup meeting spot.</li>
+        <li>Share your live location if you're running late.</li>
+      </ul>
+    </div>
+    <div class="essence-card">
+      <h3>🙇 A Few Manners Things</h3>
+      <ul>
+        <li>No tipping — it's actually considered rude, people will try to give it back.</li>
+        <li>Shoes off indoors — hostels, temples, traditional inns.</li>
+        <li>Stand on the left on escalators in Tokyo, right in Osaka.</li>
+        <li>Keep it quiet on trains, no phone calls.</li>
+        <li>At temples: wash your hands at the water basin, and don't photograph people mid-prayer.</li>
+      </ul>
+    </div>
+    <div class="essence-card">
+      <h3>☔ If It's Raining</h3>
+      <ul>
+        <li>TeamLab — indoor digital art, book ahead.</li>
+        <li>Underground malls like Crystal City or Umeda.</li>
+        <li>Don Quijote — endless floors of random stuff to look at.</li>
+        <li>Arcades (Sega, Taito) — fully indoor.</li>
+        <li>Covered shopping streets like Shinsaibashi or Nishiki Market.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p class="kanji-foot">旅</p>
+  <p>Japan Trip 2027 • Built for Connor, Nate, Mikey, Kyle, Ethan & Mason</p>
+</footer>
+
+<div id="lightbox" onclick="closeLightbox()">
+  <span id="lightbox-close" onclick="closeLightbox()">&times;</span>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  function openLightbox(img) {
+    const lb = document.getElementById('lightbox');
+    const lbImg = document.getElementById('lightbox-img');
+    lbImg.src = img.src.replace(/w=\d+/, 'w=1800');
+    lbImg.alt = img.alt;
+    lb.classList.add('open');
+  }
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+  }
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.tile img, .card img, .hotel-card img, .food-card img').forEach(img => {
+      img.addEventListener('click', function (e) {
+        e.stopPropagation();
+        openLightbox(img);
+      });
+    });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeLightbox();
+  });
+
+  const map = L.map('map').setView([35.3, 137.2], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>'
+  }).addTo(map);
+  const tokyo = [35.6762, 139.6503];
+  const osaka = [34.6937, 135.5023];
+  const kyoto = [35.0116, 135.7681];
+  const nara = [34.6851, 135.8048];
+  const fuji = [35.3606, 138.7274];
+  L.marker(tokyo).addTo(map).bindPopup('<b>Tokyo</b><br>Home base for the first stretch<br>Narita Airport (NRT)');
+  L.marker(fuji).addTo(map).bindPopup('<b>Mt. Fuji / Hakone</b><br>Full-day hike, out from Tokyo');
+  L.marker(kyoto).addTo(map).bindPopup('<b>Kyoto</b><br>Temples, Gion, Arashiyama');
+  L.marker(nara).addTo(map).bindPopup('<b>Nara</b><br>Day trip from Kyoto — deer park & Todai-ji');
+  L.marker(osaka).addTo(map).bindPopup('<b>Osaka</b><br>Last stop<br>Kansai Airport (KIX)');
+  map.fitBounds([tokyo, osaka, kyoto, nara, fuji], {padding: [50,50]});
+</script>
+
+</body>
+</html>
